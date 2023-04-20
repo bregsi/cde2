@@ -1,3 +1,8 @@
+#Python Code for Raspberry Pie Zero W with Grove-Hat
+
+###########
+#Libraries#
+###########
 from scd30_i2c import SCD30
 import time
 import csv
@@ -8,9 +13,15 @@ from grove.grove_4_digit_display import Grove4DigitDisplay
 import chainable_rgb_direct
 import threading
 
-# Connect the Grove Button to port PWM
-button_pin = 12
-button = GPIO(button_pin, GPIO.IN)
+#######################
+#Variable introduction#
+#######################
+
+#Location ID; 0:r 1:g 2:j
+location_id = 0
+
+#Last DB safe is ready set %TODO% set it to false, on startup, set it to false
+db_connection = True
 
 # Define global variables for CO2, temperature, and humidity
 co2 = 0
@@ -22,14 +33,14 @@ display_options = ["co2", "temperature", "humidity"]
 display_option_index = 0
 display_option = display_options[display_option_index]
 
-# setup 4-digit
-pin_display = 5
-display = Grove4DigitDisplay(pin_display, pin_display + 1)
-display.set_colon(False)
 
-# global variables setup
+# global variables for interaction between functions
 button_use = False
 window_open = False
+
+######################
+#Function Definitions#
+######################
 
 # Define a function to show the display based on the display option selected
 def show_display():
@@ -68,16 +79,12 @@ def show_display():
             time.sleep(0.5)
 
 
-# Start the display thread
-display_thread = threading.Thread(target=show_display)
-display_thread.start()
 
-
-
+#Define a function to handle button presses
 def handle_button_press():
     global display_option_index, display_option, display, button_use, window_open
     pressed_time = None
-    delay_time = 1  # set the delay time to 1 second
+    delay_time = 0.25  # set the delay time to 0.25 second
 
     # Add debounce delay to handle rapid button presses
     debounce_delay = 0.1
@@ -135,19 +142,6 @@ def handle_button_press():
         except IOError:
             print("Error: Button")
 
-            
-# Start the button press handling thread
-button_thread = threading.Thread(target=handle_button_press)
-button_thread.start()
-
-#co2, temp & humidity sensor
-scd30 = SCD30()
-scd30.set_measurement_interval(2)
-scd30.start_periodic_measurement()
-
-
-##Location ID; 0:r 1:g 2:j
-location_id = 0
 
 # Define a function to save the measurement
 def save_measurement():
@@ -186,16 +180,7 @@ def save_measurement():
             time.sleep(1.5)
 
 
-#Start the measurement thread
-measurement_thread = threading.Thread(target=save_measurement)
-measurement_thread.start()
-
-# Setting up led function
-num_led = 1
-rgbled = chainable_rgb_direct.rgb_led(num_led)
-#Last DB safe is ready set %TODO% set it to false, on startup, set it to false
-db_connection = True
-
+#Define a function that handles LED signaling
 def status_led():
     global db_connection, co2, window_open
     while True:
@@ -218,6 +203,49 @@ def status_led():
             break
         except IOError:
             print("Error: RGB LED")
+
+
+###########################################
+# Initialization of sensors and actuators #
+###########################################
+
+# Initializing 4-digit Display
+#Connect Display to Socket D5
+pin_display = 5
+display = Grove4DigitDisplay(pin_display, pin_display + 1)
+display.set_colon(False)
+
+# Initializing co2, temp & humidity sensor
+# Connect to the I2C socket
+scd30 = SCD30()
+scd30.set_measurement_interval(2)
+scd30.start_periodic_measurement()
+
+# Initializing Chainable RGB LED
+# connect Chainable RGB LED to RPISER(UART) Socket
+#Number of Leds
+num_led = 1
+rgbled = chainable_rgb_direct.rgb_led(num_led)
+
+# Connect the Grove Button to PWM socket
+button_pin = 12
+button = GPIO(button_pin, GPIO.IN)
+
+###################
+# Start Threading #
+###################
+
+# Start the display thread
+display_thread = threading.Thread(target=show_display)
+display_thread.start()
+
+# Start the button press handling thread
+button_thread = threading.Thread(target=handle_button_press)
+button_thread.start()
+
+#Start the measurement thread
+measurement_thread = threading.Thread(target=save_measurement)
+measurement_thread.start()
 
 #Start the RGB LED Thread
 rgbled_thread = threading.Thread(target=status_led)
