@@ -84,7 +84,6 @@ def handle_button_press():
 
     while True:
         try:
-
             #add debounce delay
             time.sleep(debounce_delay)
             # Read the button state (0 or 1)
@@ -147,7 +146,7 @@ scd30.set_measurement_interval(2)
 scd30.start_periodic_measurement()
 
 
-##Location ID; 0:random 1:Greg 2:Jan
+##Location ID; 0:r 1:g 2:j
 location_id = 0
 
 # Define a function to save the measurement
@@ -202,14 +201,19 @@ def status_led():
     while True:
         try:
             if not db_connection:
-                rgbled.setOneLED(10, 0, 0, 0)
+                rgbled.setOneLED(42, 0, 0, 0)
+                time.sleep(0.25)
+                if window_open:
+                    rgbled.setOneLED(42, 66, 0, 0)
             elif co2 > 1400:
                 rgbled.setOneLED(0, 0, 10, 0)
             elif window_open:
                 rgbled.setOneLED(42, 66, 0, 0)
+                time.sleep(0.25)
+                rgbled.setOneLED(0, 0, 0, 0)
             else:
                 rgbled.setOneLED(0, 0, 0, 0)
-            time.sleep(0.2)
+            time.sleep(0.25)
         except KeyboardInterrupt:
             break
         except IOError:
