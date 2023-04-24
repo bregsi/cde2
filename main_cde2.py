@@ -228,13 +228,13 @@ def status_led():
 
 #Define a function that writes the location to a file
 def write_location_id(location_id):
-    with open('location_id.csv', mode='w', newline='') as location_id_file:
+    with open('/home/pi/python/location_id.csv', mode='w', newline='') as location_id_file:
         writer = csv.writer(location_id_file)
         writer.writerow([location_id])
 
 #Define a function that reads the location from a file
 def read_location_id():
-    with open('location_id.csv', mode='r') as location_id_file:
+    with open('/home/pi/python/location_id.csv', mode='r') as location_id_file:
         reader = csv.reader(location_id_file)
         for row in reader:
             return int(row[0])
