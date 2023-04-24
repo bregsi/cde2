@@ -251,22 +251,23 @@ def save_measurement():
                         "INSERT INTO co2_temperature_humidity_entries (co2,temperature, humidity,window_open,location_id,db_deliver_status) VALUES (?, ?, ?, ?, ?, ?)",
                         (m[0], m[1], m[2], window_open, location_id, False))
                     db_conn.commit()
-                    print("Database data locally saved")
+                    print("Saved all Measurements to local database saved")
                 except Exception as e:
                     print("Error saving data to local database: ", e)
 
-                # Transmit measurement data to oracle database
-                transmission_to_oracle_db(measurement_time, m[0], m[1], m[2], window_open, location_id)
+                # Start thread to transmit measurement data to oracle database
+                oracle_db_thread = threading.Thread(target=transmission_to_oracle_db, args=(measurement_time, m[0], m[1], m[2], window_open, location_id))
+                oracle_db_thread.start()
 
 
         #Check the time how long 1 round of measurement and data transmission took
         end_time = time.time()
         time_taken = end_time - start_time
-        print("Mess und Transmissions-Zeit:")
+        print("Mess -Zeit:")
         print(time_taken)
-        #Pause for at least
-        if time_taken < 2:
-            time.sleep( 2- time_taken)
+        #Pause for at least x seconds
+        if time_taken < 4:
+            time.sleep( 4 - time_taken)
 
 #Define a function that retries sending the measurements to the oracle db
 def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, window_open, location_id):
@@ -290,17 +291,17 @@ def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, wind
         response = requests.post(urls[0], json=payload)
         if response.status_code == 200:
             # Print the status code of the request made to the Oracle database
-            print(f"Sent to Oracle database. Status code: {response.status_code}")
+            print(f"Sent CO2 to Oracle database. Status code: {response.status_code}")
             db_connection = True
         else:
             # Print the status code of the request made to the Oracle database
-            print(f"Sent to Oracle database. Status code: {response.status_code}")
+            print(f"CO2 to Oracle database Eroor. Status code: {response.status_code}")
             db_connection = False
             cursor_temp.execute(
                 "INSERT INTO co2_entries (measurement_time,co2,window_open,location_id,db_deliver_status) VALUES (?, ?, ?, ?, ?)",
                 (mst, co2, window_open, location_id, False))
             db_conn_temp.commit()
-            print("Database data locally temporarily saved")
+            print("CO2 data locally temporarily saved")
     except Exception as e:
         print("Some Error while trying to co2 data: ", e)
         db_connection = False
@@ -318,17 +319,17 @@ def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, wind
         response = requests.post(urls[1], json=payload)
         if response.status_code == 200:
             # Print the status code of the request made to the Oracle database
-            print(f"Sent to Oracle database. Status code: {response.status_code}")
+            print(f"Temperature sent to Oracle database. Status code: {response.status_code}")
             db_connection = True
         else:
             # Print the status code of the request made to the Oracle database
-            print(f"Sent to Oracle database. Status code: {response.status_code}")
+            print(f"Temperature to Oracle database Error. Status code: {response.status_code}")
             db_connection = False
             cursor_temp.execute(
                 "INSERT INTO temperature_entries (measurement_time,temperature,window_open,location_id,db_deliver_status) VALUES (?, ?, ?, ?, ?)",
                 (mst, temperature, window_open, location_id, False))
             db_conn_temp.commit()
-            print("Database data locally temporarily saved")
+            print("Temperature data locally temporarily saved")
     except Exception as e:
         print("Some Error while trying to transmit temperature data: ", e)
         db_connection = False
@@ -346,11 +347,11 @@ def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, wind
         response = requests.post(urls[2], json=payload)
         if response.status_code == 200:
             # Print the status code of the request made to the Oracle database
-            print(f"Sent to Oracle database. Status code: {response.status_code}")
+            print(f"Humidity sent to Oracle database. Status code: {response.status_code}")
             db_connection = True
         else:
             # Print the status code of the request made to the Oracle database
-            print(f"Sent to Oracle database. Status code: {response.status_code}")
+            print(f"Humidity to Oracle database Error. Status code: {response.status_code}")
             db_connection = False
             cursor_temp.execute(
                 "INSERT INTO humidity_entries (measurement_time,humidity,window_open,location_id,db_deliver_status) VALUES (?, ?, ?, ?, ?)",
@@ -372,13 +373,13 @@ def transmission_to_oracle_db_retry():
 
         # Fetch all unsent data from temperature_data, humidity_data, and light_data tables
         cursor_temp.execute("SELECT * FROM co2_entries WHERE db_deliver_status = FALSE")
-        co2_data = cursor.fetchall()
+        co2_data = cursor_temp.fetchall()
 
         cursor_temp.execute("SELECT * FROM temperature_entries WHERE db_deliver_status = FALSE")
-        temperature_data = cursor.fetchall()
+        temperature_data = cursor_temp.fetchall()
 
         cursor_temp.execute("SELECT * FROM humidity_entries WHERE db_deliver_status = FALSE")
-        humidity_data = cursor.fetchall()
+        humidity_data = cursor_temp.fetchall()
 
         # Upload co2 data to the Oracle database
         for entry in co2_data:
@@ -537,9 +538,9 @@ button_pin = 12
 button = GPIO(button_pin, GPIO.IN)
 
 
-######
-#MAIN#
-######
+########
+# MAIN #
+########
 # Read the saved location ID from the CSV file
 try:
     location_id = read_location_id()
@@ -568,3 +569,7 @@ measurement_thread.start()
 #Start the RGB LED Thread
 rgbled_thread = threading.Thread(target=status_led)
 rgbled_thread.start()
+
+#Start the retry for the transmission to Oracle DB
+oracle_db_retry_thread = threading.Thread(target=transmission_to_oracle_db_retry)
+oracle_db_retry_thread.start()
