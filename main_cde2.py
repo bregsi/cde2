@@ -72,22 +72,26 @@ def show_display():
             elif display_option == "humidity":
                 display.show(int(round(humidity, 0)))
                 print(f"Humidity: {humidity:.2f}%")
-            elif "LOC" in display_option:
-                display.show(display_option)
-                print(display_option)
+                # Add a sleep between updates
+                time.sleep(0.5)
+            else:
+                display.clear()
 
-            # Add a sleep between updates
-            time.sleep(1)
-        else:
-            display.clear()
-            # Add a sleep between updates
-            time.sleep(0.5)
+
+        if "LOC" in display_option:
+            display.show(display_option)
+            print(display_option)
+
+
+        # Add a sleep between updates
+        time.sleep(0.5)
+
 
 
 
 #Define a function to handle button presses
 def handle_button_press():
-    global display_option_index, display_option, display_options, button_use, window_open
+    global display_option_index, display_option, display_options, button_use, window_open, location_edit_mode
     pressed_time = None
     delay_time = 0.25  # set the delay time to 0.25 second
 
@@ -129,14 +133,18 @@ def handle_button_press():
                     pressed_time = None
                     #button_use = 0
                 elif pressed_duration >=5.0:
+                    print("Button pressed for {:.2f} seconds, more than 5 seconds!".format(pressed_duration))
                     #entered location edit mode
                     if location_edit_mode == True:
                         write_location_id(location_id)
                         display_option="co2"
+                        print(display_option)
                         location_edit_mode = False
                     else:
                         location_edit_mode = True
                         display_option= "LOC" + str(location_id)
+                        print(display_option)
+                    pressed_time = None
 
 
                 else:
@@ -150,6 +158,8 @@ def handle_button_press():
                     elif display_option in ["LOC0", "LOC1", "LOC2", "LOC3", "LOC4", "LOC5"]:
                         cycle_location()
                         display_option = "LOC" + str(location_id)
+                    else:
+                        print("Error in Short Button Press")
 
 
 
@@ -241,9 +251,9 @@ def read_location_id():
 
 # Define a function to cycle through location IDs when the button is pressed
 def cycle_location():
-    global location_id
+    global location_id, location_ids
     location_id = (location_id + 1) % len(location_ids)
-    print(f"Location ID: {location_ids[location_index]}")
+    print(f"Location ID: {location_ids[location_id]}")
 
 ###########################################
 # Initialization of sensors and actuators #
