@@ -17,16 +17,16 @@ import threading
 #Variable introduction#
 #######################
 
-#Location ID
+#Location
 location_ids = [0, 1, 2, 3, 4, 5]
 location_edit_mode = False
 
 #Last DB safe is ready set %TODO% set it to false, on startup, set it to false
 db_connection = True
 
-# Define global variables for CO2, temperature, and humidity
+# Global variables for CO2, terature, and humidity
 co2 = 0
-temp = 0
+temperature = 0
 humidity = 0
 
 # introduce display options
@@ -87,7 +87,7 @@ def show_display():
 
 #Define a function to handle button presses
 def handle_button_press():
-    global display_option_index, display_option, display_options, display, button_use, window_open
+    global display_option_index, display_option, display_options, button_use, window_open
     pressed_time = None
     delay_time = 0.25  # set the delay time to 0.25 second
 
@@ -116,7 +116,7 @@ def handle_button_press():
                 released_time = time.monotonic()
                 pressed_duration = released_time - pressed_time
                 #button_use = 1
-                if pressed_duration >= 2.0:
+                if pressed_duration >= 2.0 and pressed_duration < 5.0:
                     print("Button pressed for {:.2f} seconds, more than 2 seconds!".format(pressed_duration))
                     # Handle long press
                     #global window_open
@@ -301,10 +301,3 @@ measurement_thread.start()
 #Start the RGB LED Thread
 rgbled_thread = threading.Thread(target=status_led)
 rgbled_thread.start()
-
-
-
-
-location_id= 0
-
-
