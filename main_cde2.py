@@ -17,8 +17,9 @@ import threading
 #Variable introduction#
 #######################
 
-#Location ID; 0:r 1:g 2:j
-location_id = 0
+#Location ID
+location_ids = [0, 1, 2, 3, 4, 5]
+location_edit_mode = False
 
 #Last DB safe is ready set %TODO% set it to false, on startup, set it to false
 db_connection = True
@@ -71,6 +72,10 @@ def show_display():
             elif display_option == "humidity":
                 display.show(int(round(humidity, 0)))
                 print(f"Humidity: {humidity:.2f}%")
+            elif "LOC" in display_option:
+                display.show(display_option)
+                print(display_option)
+
             # Add a sleep between updates
             time.sleep(1)
         else:
@@ -82,7 +87,7 @@ def show_display():
 
 #Define a function to handle button presses
 def handle_button_press():
-    global display_option_index, display_option, display, button_use, window_open
+    global display_option_index, display_option, display_options, display, button_use, window_open
     pressed_time = None
     delay_time = 0.25  # set the delay time to 0.25 second
 
@@ -114,22 +119,39 @@ def handle_button_press():
                 if pressed_duration >= 2.0:
                     print("Button pressed for {:.2f} seconds, more than 2 seconds!".format(pressed_duration))
                     # Handle long press
-                    #global window_open  # jz
-                    if window_open == True:  # jz
-                        window_open = False  # jz
+                    #global window_open
+                    if window_open == True:
+                        window_open = False
                     else:
-                        window_open = True  # jz
+                        window_open = True
                     #time.sleep(1.1)
                     time.sleep(delay_time)
                     pressed_time = None
                     #button_use = 0
+                elif pressed_duration >=5.0:
+                    #entered location edit mode
+                    if location_edit_mode == True:
+                        write_location_id(location_id)
+                        display_option="co2"
+                        location_edit_mode = False
+                    else:
+                        location_edit_mode = True
+                        display_option= "LOC" + str(location_id)
+
+
                 else:
                     print("Button pressed for {:.2f} seconds, less than 2 seconds.".format(pressed_duration))
-                    # Cycle through display options on short press
-                    display_option_index = (display_option_index + 1) % len(display_options)
-                    display_option = display_options[display_option_index]
-                    time.sleep(delay_time)
-                    button_use = True
+                    if display_option in ["co2", "temperature", "humidity"]:
+                        # Cycle through display options on short press
+                        display_option_index = (display_option_index + 1) % len(display_options)
+                        display_option = display_options[display_option_index]
+                        time.sleep(delay_time)
+                        button_use = True
+                    elif display_option in ["LOC0", "LOC1", "LOC2", "LOC3", "LOC4", "LOC5"]:
+                        cycle_location()
+                        display_option = "LOC" + str(location_id)
+
+
 
                 time.sleep(delay_time)
                 pressed_time = None
@@ -176,7 +198,7 @@ def save_measurement():
                     db_conn.commit()
                     print("Database data saved")
                 except Exception as e:
-                    print("Error saving data to database: ", e)
+                    print("Error saving data to local database: ", e)
             time.sleep(1.5)
 
 
@@ -204,6 +226,24 @@ def status_led():
         except IOError:
             print("Error: RGB LED")
 
+#Define a function that writes the location to a file
+def write_location_id(location_id):
+    with open('location_id.csv', mode='w', newline='') as location_id_file:
+        writer = csv.writer(location_id_file)
+        writer.writerow([location_id])
+
+#Define a function that reads the location from a file
+def read_location_id():
+    with open('location_id.csv', mode='r') as location_id_file:
+        reader = csv.reader(location_id_file)
+        for row in reader:
+            return int(row[0])
+
+# Define a function to cycle through location IDs when the button is pressed
+def cycle_location():
+    global location_id
+    location_id = (location_id + 1) % len(location_ids)
+    print(f"Location ID: {location_ids[location_index]}")
 
 ###########################################
 # Initialization of sensors and actuators #
@@ -231,6 +271,17 @@ rgbled = chainable_rgb_direct.rgb_led(num_led)
 button_pin = 12
 button = GPIO(button_pin, GPIO.IN)
 
+
+######
+#MAIN#
+######
+# Read the saved location ID from the CSV file
+try:
+    location_id = read_location_id()
+except IOError:
+    print("Location ID not yet set")
+    write_location_id(0)
+    
 ###################
 # Start Threading #
 ###################
@@ -250,3 +301,10 @@ measurement_thread.start()
 #Start the RGB LED Thread
 rgbled_thread = threading.Thread(target=status_led)
 rgbled_thread.start()
+
+
+
+
+location_id= 0
+
+
