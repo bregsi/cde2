@@ -284,29 +284,27 @@ def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, wind
 
     try:
         payloads = {
-             "measurement_time": mst,
-             "location_id": location_id,
-             "window_open": window_open,
-             "sensor_name": "CO2 Sensor",
-             "value": co2,
-             "unit": "ppm"
-            }''',
-        {"measurement_time": mst,
-             "location_id": location_id,
-             "window_open": window_open,
-             "sensor_name": "Temperature",
-             "value": temperature,
-             "unit": "°C"
-            },
-            {"measurement_time": mst,
-             "location_id": location_id,
-             "indow_open": window_open,
-             "sensor_name": "Humidity",
-             "value": humidity,
-             "unit": "%"
-            }
-        ]
-'''
+            "measurement_time": mst,
+            "location_id": location_id,
+            "window_open": window_open,
+            "data" : [
+                {
+                    "sensor_name": "CO2 Sensor",
+                    "value": co2,
+                    "unit": "ppm"
+                },
+                {
+                    "sensor_name": "Temperature",
+                    "value": temperature,
+                    "unit": "°C"
+                },
+                {
+                    "sensor_name": "Humidity",
+                    "value": humidity,
+                    "unit": "%"
+                }
+            ]
+        }
         print(payloads)
         response = requests.post(urls[0], json=payloads)
         if response.status_code == 200:
