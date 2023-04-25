@@ -283,15 +283,16 @@ def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, wind
     cursor_temp = db_conn_temp.cursor()
 
     try:
-        payloads = [
+        payloads =
+            #[
             {"measurement_time": mst,
              "location_id": location_id,
              "window_open": window_open,
              "sensor_name": "CO2 Sensor",
              "value": co2,
              "unit": "ppm"
-            },
-            {"measurement_time": mst,
+            }''',
+        {"measurement_time": mst,
              "location_id": location_id,
              "window_open": window_open,
              "sensor_name": "Temperature",
@@ -306,7 +307,7 @@ def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, wind
              "unit": "%"
             }
         ]
-
+'''
         print(payloads)
         response = requests.post(urls[0], json=payloads)
         if response.status_code == 200:
@@ -401,17 +402,22 @@ def transmission_to_oracle_db_retry():
 
 # Define a function that handles LED signaling
 def status_led():
+    #setuo global variables
     global db_connection, co2, window_open
+    #Start Loop for the RGB LED
     while True:
         try:
+            #condition if Oracle DB Transmission failed
             if not db_connection:
                 rgbled.setOneLED(42, 0, 0, 0)
                 time.sleep(0.25)
+                #Window Condition while ODB connection is not available
                 if window_open:
                     rgbled.setOneLED(42, 66, 0, 0)
                 if co2 > 1400:
                     time.sleep(0.25)
                     rgbled.setOneLED(0, 0, 10, 0)
+            #condition is co2 value is higher then 1400ppm
             elif co2 > 1400:
                 rgbled.setOneLED(0, 0, 10, 0)
                 if window_open:
