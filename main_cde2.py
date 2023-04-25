@@ -1,4 +1,5 @@
 # Python Code for Raspberry Pie Zero W with Grove-Hat
+#25.4.2023 18:06 MESZ
 # CO2,Temperature and Humidity Sensor
 
 ############
@@ -287,7 +288,7 @@ def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, wind
             "measurement_time": mst,
             "location_id": location_id,
             "window_open": window_open,
-            "data" : [
+            "data": [
                 {
                     "sensor_name": "CO2 Sensor",
                     "value": co2,
