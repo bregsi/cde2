@@ -1,8 +1,9 @@
-#Python Code for Raspberry Pie Zero W with Grove-Hat
-#CO2,Temperature and Humidity Sensor
-###########
-#Libraries#
-###########
+# Python Code for Raspberry Pie Zero W with Grove-Hat
+# CO2,Temperature and Humidity Sensor
+
+############
+# Libraries#
+############
 from scd30_i2c import SCD30
 import time
 import datetime
@@ -14,15 +15,15 @@ from grove.grove_4_digit_display import Grove4DigitDisplay
 import chainable_rgb_direct
 import threading
 
-#######################
-#Variable introduction#
-#######################
+#########################
+# Variable introduction #
+#########################
 
-#Location
+# Location
 location_ids = [0, 1, 2, 3, 4, 5]
 location_edit_mode = False
 
-#Last DB safe is ready set %TODO% set it to false, on startup, set it to false
+# Last DB safe is ready set
 db_connection = False
 
 # Global variables for CO2, temperature, and humidity
@@ -34,7 +35,6 @@ humidity = 0
 display_options = ["co2", "temperature", "humidity"]
 display_option_index = 0
 display_option = display_options[display_option_index]
-
 
 # global variables for interaction between functions
 button_use = False
@@ -59,10 +59,19 @@ cursor.execute('''CREATE TABLE IF NOT EXISTS co2_temperature_humidity_entries
 db_conn.commit()
 db_conn.close()
 
-
 # Create a connection to the Temporary SQLite database and a temporary cursor to execute SQL commands
 db_conn_temp = sqlite3.connect('/home/pi/python/cde2_data_temp.db')
 cursor_temp = db_conn_temp.cursor()
+
+cursor_temp.execute('''CREATE TABLE IF NOT EXISTS co2_temperature_humidity_entries
+                  (timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                   measurement_time STRING,
+                   co2 REAL,
+                   temperature REAL,
+                   humidity REAL,
+                   window_open BOOL,
+                   location_id REAL,
+                   db_deliver_status BOOL)''')
 
 # Create the temperature_humidity_entries table if it doesn't exist
 cursor_temp.execute('''CREATE TABLE IF NOT EXISTS co2_entries
@@ -91,9 +100,10 @@ cursor_temp.execute('''CREATE TABLE IF NOT EXISTS humidity_entries
 db_conn_temp.commit()
 db_conn_temp.close()
 
-######################
-#Function Definitions#
-######################
+
+########################
+# Function Definitions #
+########################
 
 # Define a function to show the display based on the display option selected
 def show_display():
@@ -101,7 +111,7 @@ def show_display():
     while True:
         # Blink the display for CO2, Temperature, and Humidity options
         if display_option in ["co2", "temperature", "humidity"]:
-            if button_use == True:
+            if button_use:
                 for _ in range(1):
                     if display_option == 'co2':
                         display.show('CO2 ')
@@ -117,31 +127,27 @@ def show_display():
             # Show the current display option on the 4-digit display
             if display_option == "co2":
                 display.show(int(round(co2, 0)))
-                #print(f"CO2: {co2:.2f}ppm")
+                # print(f"CO2: {co2:.2f}ppm")
             elif display_option == "temperature":
                 display.show(int(round(temperature, 0)))
-                #print(f"Temperature: {temperature:.2f}'C")
+                # print(f"Temperature: {temperature:.2f}'C")
             elif display_option == "humidity":
                 display.show(int(round(humidity, 0)))
-                #print(f"Humidity: {humidity:.2f}%")
+                # print(f"Humidity: {humidity:.2f}%")
                 # Add a sleep between updates
                 time.sleep(0.5)
             else:
                 display.clear()
 
-
         if "LOC" in display_option:
             display.show(display_option)
             print(display_option)
-
 
         # Add a sleep between updates
         time.sleep(0.25)
 
 
-
-
-#Define a function to handle button presses
+# Define a function to handle button presses
 def handle_button_press():
     global display_option_index, display_option, display_options, button_use, window_open, location_edit_mode
     pressed_time = None
@@ -152,7 +158,7 @@ def handle_button_press():
 
     while True:
         try:
-            #add debounce delay
+            # add debounce delay
             time.sleep(debounce_delay)
             # Read the button state (0 or 1)
             button_state = button.read()
@@ -161,11 +167,7 @@ def handle_button_press():
             # the pressed time yet, record the start time
             if button_state == 1 and pressed_time is None:
                 pressed_time = time.monotonic()
-                #button_use = 1
-            #if button_state == 0 and pressed_time is None:
-            #    none
-            #if button_state == 1 and pressed_time is not None:
-            #    none
+
             # If the button is released (HIGH state) and we have already started measuring
             # the pressed time, determine if it was a short or long press
             if button_state == 0 and pressed_time is not None:
@@ -175,26 +177,26 @@ def handle_button_press():
                 if pressed_duration >= 2.0 and pressed_duration < 5.0:
                     print("Button pressed for {:.2f} seconds, more than 2 seconds!".format(pressed_duration))
                     # Handle long press
-                    #global window_open
+                    # global window_open
                     if window_open == True:
                         window_open = False
                     else:
                         window_open = True
-                    #time.sleep(1.1)
+                    # time.sleep(1.1)
                     time.sleep(delay_time)
                     pressed_time = None
-                    #button_use = 0
-                elif pressed_duration >=5.0:
+                    # button_use = 0
+                elif pressed_duration >= 5.0:
                     print("Button pressed for {:.2f} seconds, more than 5 seconds!".format(pressed_duration))
-                    #entered location edit mode
+                    # entered location edit mode
                     if location_edit_mode == True:
                         write_location_id(location_id)
-                        display_option="co2"
+                        display_option = "co2"
                         print(display_option)
                         location_edit_mode = False
                     else:
                         location_edit_mode = True
-                        display_option= "LOC" + str(location_id)
+                        display_option = "LOC" + str(location_id)
                         print(display_option)
                     pressed_time = None
 
@@ -212,8 +214,6 @@ def handle_button_press():
                         display_option = "LOC" + str(location_id)
                     else:
                         print("Error in Short Button Press")
-
-
 
                 time.sleep(delay_time)
                 pressed_time = None
@@ -233,16 +233,16 @@ def save_measurement():
     # Establish a connection to the SQLite database and a cursor to execute SQL commands
     db_conn = sqlite3.connect('/home/pi/python/cde2_data.db')
     cursor = db_conn.cursor()
-    counter = 0
+    counter = 1
     while True:
         start_time = time.time()
         if scd30.get_data_ready():
             m = scd30.read_measurement()
             measurement_time = datetime.datetime.now()
             if m is not None:
-                co2 = round(m[0],2)
-                temperature = round(m[1],2)
-                humidity = round(m[2],2)
+                co2 = round(m[0], 2)
+                temperature = round(m[1], 2)
+                humidity = round(m[2], 2)
                 print(f"CO2: {co2:.2f}ppm, temp: {temperature:.2f}'C, rh: {humidity:.2f}%")
 
                 # Insert measurement data into database
@@ -257,11 +257,11 @@ def save_measurement():
 
                 # Start thread to transmit every 5th measurement data to oracle database
                 if counter % 5 == 0:
-                    oracle_db_thread = threading.Thread(target=transmission_to_oracle_db, args=(measurement_time, co2, temperature, humidity, window_open, location_id))
+                    oracle_db_thread = threading.Thread(target=transmission_to_oracle_db, args=(
+                    measurement_time, co2, temperature, humidity, window_open, location_id))
                     oracle_db_thread.start()
                     counter = 0
                 counter += 1
-
 
         # Check the time how long measurement took (transmission to oracle takes a long time)
         end_time = time.time()
@@ -270,105 +270,64 @@ def save_measurement():
         print(time_taken)
         # Pause for at least x seconds
         if time_taken < 1.9:
-            time.sleep( 1.9 - time_taken)
+            time.sleep(1.9 - time_taken)
 
-#Define a function that retries sending the measurements to the oracle db
+
+# Define a function which sends the measurements to the oracle db
 def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, window_open, location_id):
     global urls, db_connection
-    # Transmit measurement data to oracle database
-    mst=measurement_time.strftime("%Y-%m-%d %H:%M:%S")
+    mst = measurement_time.strftime("%Y-%m-%d %H:%M:%S")
+
     # Establish a connection to the Temporary SQLite database and a temporary cursor to execute SQL commands
     db_conn_temp = sqlite3.connect('/home/pi/python/cde2_data_temp.db')
     cursor_temp = db_conn_temp.cursor()
 
-    # CO2
     try:
-        payload = {
-            "measurement_time": mst,
-            "location_id": location_id,
-            "window_open": window_open,
-            "sensor_name": "CO2 Sensor",
-            "value": co2,
-            "unit": "ppm"
-        }
-        print(payload)
-        response = requests.post(urls[0], json=payload)
+        payloads = [
+            {"measurement_time": mst,
+             "location_id": location_id,
+             "window_open": window_open,
+             "sensor_name": "CO2 Sensor",
+             "value": co2,
+             "unit": "ppm"
+            },
+            {"measurement_time": mst,
+             "location_id": location_id,
+             "window_open": window_open,
+             "sensor_name": "Temperature",
+             "value": temperature,
+             "unit": "°C"
+            },
+            {"measurement_time": mst,
+             "location_id": location_id,
+             "indow_open": window_open,
+             "sensor_name": "Humidity",
+             "value": humidity,
+             "unit": "%"
+            }
+        ]
+
+        print(payloads)
+        response = requests.post(urls[0], json=payloads)
         if response.status_code == 200:
             # Print the status code of the request made to the Oracle database
-            print(f"CO2 sent to Oracle database. Status code: {response.status_code}")
+            print(f"CO2, Temperature and Humidity sent to Oracle database. Status code: {response.status_code}")
             db_connection = True
         else:
             # Print the status code of the request made to the Oracle database
-            print(f"CO2 to Oracle database Error. Status code: {response.status_code}")
+            print(f"CTH to Oracle database Error. Status code: {response.status_code}")
             db_connection = False
             cursor_temp.execute(
-                "INSERT INTO co2_entries (measurement_time,co2,window_open,location_id,db_deliver_status) VALUES (?, ?, ?, ?, ?)",
-                (mst, co2, window_open, location_id, False))
+                "INSERT INTO co2_temperature_humidity_entries (measurement_time, co2, temperature, humidity,window_open,location_id,db_deliver_status) VALUES (?, ?, ?, ?, ?, ?,?)",
+                (mst, co2, temperature, humidity, window_open, location_id, False))
             db_conn_temp.commit()
-            print("CO2 data locally temporarily saved")
+            print("Dataset locally temporarily saved")
     except Exception as e:
-        print("Some Error while trying to co2 data: ", e)
+        print("Some Error while trying to save the Dataset: ", e)
         db_connection = False
 
-    # Temperature
-    try:
-        payload = {
-            "measurement_time": mst,
-            "location_id": location_id,
-            "window_open": window_open,
-            "sensor_name": "Temperature",
-            "value": temperature,
-            "unit": "°C"
-        }
-        print(payload)
-        response = requests.post(urls[1], json=payload)
-        if response.status_code == 200:
-            # Print the status code of the request made to the Oracle database
-            print(f"Temperature sent to Oracle database. Status code: {response.status_code}")
-            db_connection = True
-        else:
-            # Print the status code of the request made to the Oracle database
-            print(f"Temperature to Oracle database Error. Status code: {response.status_code}")
-            db_connection = False
-            cursor_temp.execute(
-                "INSERT INTO temperature_entries (measurement_time,temperature,window_open,location_id,db_deliver_status) VALUES (?, ?, ?, ?, ?)",
-                (mst, temperature, window_open, location_id, False))
-            db_conn_temp.commit()
-            print("Temperature data locally temporarily saved")
-    except Exception as e:
-        print("Some Error while trying to transmit temperature data: ", e)
-        db_connection = False
 
-    # Humidity
-    try:
-        payload = {
-            "measurement_time": mst,
-            "location_id": location_id,
-            "window_open": window_open,
-            "sensor_name": "Humidity",
-            "value": humidity,
-            "unit": "%"
-        }
-        print(payload)
-        response = requests.post(urls[2], json=payload)
-        if response.status_code == 200:
-            # Print the status code of the request made to the Oracle database
-            print(f"Humidity sent to Oracle database. Status code: {response.status_code}")
-            db_connection = True
-        else:
-            # Print the status code of the request made to the Oracle database
-            print(f"Humidity to Oracle database Error. Status code: {response.status_code}")
-            db_connection = False
-            cursor_temp.execute(
-                "INSERT INTO humidity_entries (measurement_time,humidity,window_open,location_id,db_deliver_status) VALUES (?, ?, ?, ?, ?)",
-                (mst, humidity, window_open, location_id, False))
-            db_conn_temp.commit()
-            print("Humidity Data locally temporarily saved")
-    except Exception as e:
-        print("Some Error while trying to transmit humidity data: ", e)
-        db_connection = False
-
-#Define a function that retries submitting measurement data
+# Define a function that retries submitting measurement data
 def transmission_to_oracle_db_retry():
     global urls
     while True:
@@ -378,91 +337,66 @@ def transmission_to_oracle_db_retry():
         cursor_temp = db_conn_temp.cursor()
 
         # Fetch all unsent data from temperature_data, humidity_data, and light_data tables
-        cursor_temp.execute("SELECT * FROM co2_entries WHERE db_deliver_status = FALSE")
-        co2_data = cursor_temp.fetchall()
-
-        cursor_temp.execute("SELECT * FROM temperature_entries WHERE db_deliver_status = FALSE")
-        temperature_data = cursor_temp.fetchall()
-
-        cursor_temp.execute("SELECT * FROM humidity_entries WHERE db_deliver_status = FALSE")
-        humidity_data = cursor_temp.fetchall()
+        cursor_temp.execute("SELECT * FROM co2_temperature_humidity_entries WHERE db_deliver_status = FALSE")
+        cth_data = cursor_temp.fetchall()
 
         # Upload co2 data to the Oracle database
-        for entry in co2_data:
-            payload = {
-                "measurement_time": entry[1],
-                "location_id": entry[4],
-                "window_open": entry[3],
-                "sensor_name": "CO2 Sensor",
-                "value": entry[2],
-                "unit": "ppm"
-            }
+        for entry in cth_data:
+            payloads = [
+                {
+                    "measurement_time": entry[1],
+                    "location_id": entry[6],
+                    "window_open": entry[5],
+                    "sensor_name": "CO2 Sensor",
+                    "value": entry[2],
+                    "unit": "ppm"
+                },
+                {
+                    "measurement_time": entry[1],
+                    "location_id": entry[6],
+                    "window_open": entry[5],
+                    "sensor_name": "Temperature",
+                    "value": entry[3],
+                    "unit": "°C"
+                },
+                {
+                    "measurement_time": entry[1],
+                    "location_id": entry[6],
+                    "window_open": entry[5],
+                    "sensor_name": "Humidity",
+                    "value": entry[4],
+                    "unit": "%"
+                }
+            ]
             try:
-                response = requests.post(urls[0], json=payload)
+                response = requests.post(urls[0], json=payloads)
                 response.raise_for_status()
+                if response.status_code == 200:
+                    # Print the status code of the request made to the Oracle database
+                    print(
+                        f"RETRY: CO2, Temperature and Humidity sent to Oracle database. Status code: {response.status_code}")
+                    db_connection = True
+                    cursor_temp.execute(
+                        "UPDATE co2_temperature_humidity_entries SET db_deliver_status = TRUE WHERE entry_id = ?",
+                        (entry[0],))
+                    db_conn_temp.commit()
             except requests.exceptions.RequestException as e:
-                print(f"Failed to upload CO2 entry {entry[0]}: {e}")
+                print(f"Retry: Failed to retry upload dataset to ODB {entry[0]}: {e}")
             else:
-                cursor_temp.execute("UPDATE co2_entries SET db_deliver_status = TRUE WHERE entry_id = ?", (entry[0],))
-                cursor_temp.execute("DELETE FROM co2_entries WHERE db_deliver_status = TRUE")
+                # cursor_temp.execute("UPDATE co2_entries SET db_deliver_status = TRUE WHERE entry_id = ?", (entry[0],))
+                cursor_temp.execute("DELETE FROM co2_temperature_humidity_entries WHERE db_deliver_status = TRUE")
                 db_conn_temp.commit()
-                print(f"Uploaded CO2 entry {entry[0]} to Oracle database.")
-
-        # Upload temperature data to the Oracle database
-        for entry in temperature_data:
-            payload = {
-                "measurement_time": entry[1],
-                "location_id": entry[4],
-                "window_open": entry[3],
-                "sensor_name": "Temperature",
-                "value": entry[2],
-                "unit": "°C"
-            }
-            try:
-                response = requests.post(urls[1], json=payload)
-                response.raise_for_status()
-            except requests.exceptions.RequestException as e:
-                print(f"Failed to upload Temperature entry {entry[0]}: {e}")
-            else:
-                cursor_temp.execute("UPDATE temperature_entries SET db_deliver_status = TRUE WHERE entry_id = ?",
-                                    (entry[0],))
-                cursor_temp.execute("DELETE FROM temperature_entries WHERE db_deliver_status = TRUE")
-                db_conn_temp.commit()
-                print(f"Uploaded Temperature entry {entry[0]} to Oracle database.")
-
-        # Upload humidity data to the Oracle database
-        for entry in humidity_data:
-            payload = {
-                "measurement_time": entry[1],
-                "location_id": entry[4],
-                "window_open": entry[3],
-                "sensor_name": "Humidity",
-                "value": entry[2],
-                "unit": "%"
-            }
-            try:
-                response = requests.post(urls[2], json=payload)
-                response.raise_for_status()
-            except requests.exceptions.RequestException as e:
-                print(f"Failed to upload humidity entry {entry[0]}: {e}")
-            else:
-                cursor_temp.execute("UPDATE humidity_entries SET db_deliver_status = TRUE WHERE entry_id = ?",
-                                    (entry[0],))
-                cursor_temp.execute("DELETE FROM humidity_entries WHERE db_deliver_status = TRUE")
-                db_conn_temp.commit()
-                print(f"Uploaded humidity entry {entry[0]} to Oracle database.")
+                print(f"Retry:Uploaded entry {entry[0]} to Oracle database.")
 
         # Close SQLite Connection
         db_conn_temp.close()
 
-
-        stop_time= time.time()
-        time_passed = stop_time-start_time
+        stop_time = time.time()
+        time_passed = stop_time - start_time
         print("DB Retry Code: elapsed time since start")
         print(time_passed)
         if time_passed < 120:
             time.sleep(120 - time_passed)
-
 
 
 # Define a function that handles LED signaling
@@ -495,11 +429,13 @@ def status_led():
         except IOError:
             print("Error: RGB LED")
 
+
 # Define a function that writes the location to a file
 def write_location_id(location_id):
     with open('/home/pi/python/location_id.csv', mode='w', newline='') as location_id_file:
         writer = csv.writer(location_id_file)
         writer.writerow([location_id])
+
 
 # Define a function that reads the location from a file
 def read_location_id():
@@ -507,6 +443,7 @@ def read_location_id():
         reader = csv.reader(location_id_file)
         for row in reader:
             return int(row[0])
+
 
 # Reads a CSV file and returns a list of the URLs in the first column.
 def read_urls_from_csv():
@@ -516,12 +453,12 @@ def read_urls_from_csv():
     return urls
 
 
-
 # Define a function to cycle through location IDs when the button is pressed
 def cycle_location():
     global location_id, location_ids
     location_id = (location_id + 1) % len(location_ids)
     print(f"Location ID: {location_ids[location_id]}")
+
 
 ###########################################
 # Initialization of sensors and actuators #
@@ -549,7 +486,6 @@ rgbled = chainable_rgb_direct.rgb_led(num_led)
 button_pin = 12
 button = GPIO(button_pin, GPIO.IN)
 
-
 ########
 # MAIN #
 ########
@@ -562,7 +498,6 @@ except IOError:
 
 # Read the connection info to the oracle DB from file
 urls = read_urls_from_csv()
-    
 
 # Start Threading #
 
@@ -583,5 +518,5 @@ rgbled_thread = threading.Thread(target=status_led)
 rgbled_thread.start()
 
 # Start the retry for the transmission to Oracle DB
-oracle_db_retry_thread = threading.Thread(target=transmission_to_oracle_db_retry)
-oracle_db_retry_thread.start()
+# oracle_db_retry_thread = threading.Thread(target=transmission_to_oracle_db_retry)
+# oracle_db_retry_thread.start()
