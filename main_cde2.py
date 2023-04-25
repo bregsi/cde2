@@ -283,9 +283,8 @@ def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, wind
     cursor_temp = db_conn_temp.cursor()
 
     try:
-        payloads =
-            #[
-            {"measurement_time": mst,
+        payloads = {
+             "measurement_time": mst,
              "location_id": location_id,
              "window_open": window_open,
              "sensor_name": "CO2 Sensor",
