@@ -74,30 +74,6 @@ cursor_temp.execute('''CREATE TABLE IF NOT EXISTS co2_temperature_humidity_entri
                    location_id REAL,
                    db_deliver_status BOOL)''')
 
-# Create the temperature_humidity_entries table if it doesn't exist
-cursor_temp.execute('''CREATE TABLE IF NOT EXISTS co2_entries
-                      (timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                       measurement_time STRING,
-                       co2 REAL,
-                       window_open BOOL,
-                       location_id REAL,
-                       db_deliver_status BOOL)''')
-# Create the temperature_humidity_entries table if it doesn't exist
-cursor_temp.execute('''CREATE TABLE IF NOT EXISTS temperature_entries
-                      (timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                       measurement_time STRING,
-                       temperature REAL,
-                       window_open BOOL,
-                       location_id REAL,
-                       db_deliver_status BOOL)''')
-# Create the temperature_humidity_entries table if it doesn't exist
-cursor_temp.execute('''CREATE TABLE IF NOT EXISTS humidity_entries
-                      (timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                       measurement_time STRING,
-                       humidity REAL,
-                       window_open BOOL,
-                       location_id REAL,
-                       db_deliver_status BOOL)''')
 db_conn_temp.commit()
 db_conn_temp.close()
 
@@ -497,5 +473,5 @@ rgbled_thread = threading.Thread(target=status_led)
 rgbled_thread.start()
 
 # Start the retry for the transmission to Oracle DB
-# oracle_db_retry_thread = threading.Thread(target=transmission_to_oracle_db_retry)
-# oracle_db_retry_thread.start()
+oracle_db_retry_thread = threading.Thread(target=transmission_to_oracle_db_retry)
+oracle_db_retry_thread.start()
