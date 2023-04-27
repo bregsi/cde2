@@ -326,7 +326,7 @@ def transmission_to_oracle_db_retry():
                     # Print the status code of the request made to the Oracle database
                     print(f"RETRY: CO2, Temperature and Humidity sent to Oracle database. Status code: {response.status_code}")
                     #db_connection = True
-                    cursor_temp.execute("UPDATE co2_temperature_humidity_entries SET db_deliver_status = TRUE WHERE entry_id = ?", (entry[0],))
+                    cursor_temp.execute("UPDATE co2_temperature_humidity_entries SET db_deliver_status = TRUE WHERE measurement_time = ?", (entry[1],))
                     db_conn_temp.commit()
                 else:
                     print(f"RETRY Fail: CO2, Temperature and Humidity not sent to Oracle database. Status code: {response.status_code}")
