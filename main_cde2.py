@@ -379,17 +379,17 @@ def status_led():
         try:
             #condition if Oracle DB Transmission failed
             if not db_connection:
-                rgbled.setOneLED(42, 0, 0, 0)
+                rgbled.setOneLED(0, 0, 10, 0)
                 time.sleep(0.25)
                 #Window Condition while ODB connection is not available
                 if window_open:
                     rgbled.setOneLED(42, 66, 0, 0)
                 if co2 > 1400:
                     time.sleep(0.25)
-                    rgbled.setOneLED(0, 0, 10, 0)
+                    rgbled.setOneLED(42, 0, 0, 0)
             #condition is co2 value is higher then 1400ppm
             elif co2 > 1400:
-                rgbled.setOneLED(0, 0, 10, 0)
+                rgbled.setOneLED(42, 0, 0, 0)
                 if window_open:
                     time.sleep(0.25)
                     rgbled.setOneLED(42, 66, 0, 0)
