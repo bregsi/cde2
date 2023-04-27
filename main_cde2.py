@@ -169,11 +169,12 @@ def handle_button_press():
                     # entered location edit mode
                     if location_edit_mode == True:
                         write_location_id(location_id)
-                        display_option = "co2"
+                        display_option = display_option_temp
                         print(display_option)
                         location_edit_mode = False
                     else:
                         location_edit_mode = True
+                        display_option_temp = display_option
                         display_option = "LOC" + str(location_id)
                         print(display_option)
                     pressed_time = None
