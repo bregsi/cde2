@@ -309,7 +309,7 @@ def transmission_to_oracle_db_retry():
             payloads = {
                     "measurement_time": entry[1],
                     "location_id": entry[6],
-                    "window_open": entry[5],
+                    "window_open": bool(entry[5]),
                     "co2_value": entry[2],
                     "co2_unit": "ppm",
                     "temperature_value": entry[3],
@@ -317,7 +317,8 @@ def transmission_to_oracle_db_retry():
                     "humidity_value": entry[4],
                     "humidity_unit": "%"
                 }
-
+            print("Retry: Payload")
+            print(payloads)
             try:
                 response = requests.post(urls[0], json=payloads)
                 response.raise_for_status()
@@ -325,18 +326,18 @@ def transmission_to_oracle_db_retry():
                     # Print the status code of the request made to the Oracle database
                     print(
                         f"RETRY: CO2, Temperature and Humidity sent to Oracle database. Status code: {response.status_code}")
-                    db_connection = True
+                    #db_connection = True
                     cursor_temp.execute(
                         "UPDATE co2_temperature_humidity_entries SET db_deliver_status = TRUE WHERE entry_id = ?",
                         (entry[0],))
                     db_conn_temp.commit()
             except requests.exceptions.RequestException as e:
                 print(f"Retry: Failed to retry upload dataset to ODB {entry[0]}: {e}")
-            else:
-                # cursor_temp.execute("UPDATE co2_entries SET db_deliver_status = TRUE WHERE entry_id = ?", (entry[0],))
-                cursor_temp.execute("DELETE FROM co2_temperature_humidity_entries WHERE db_deliver_status = TRUE")
-                db_conn_temp.commit()
-                print(f"Retry:Uploaded entry {entry[0]} to Oracle database.")
+
+        # cursor_temp.execute("UPDATE co2_entries SET db_deliver_status = TRUE WHERE entry_id = ?", (entry[0],))
+        cursor_temp.execute("DELETE FROM co2_temperature_humidity_entries WHERE db_deliver_status = TRUE")
+        db_conn_temp.commit()
+        print(f"Retry:Uploaded entry {entry[0]} to Oracle database.")
 
         # Close SQLite Connection
         db_conn_temp.close()
