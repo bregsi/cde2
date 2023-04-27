@@ -288,24 +288,13 @@ def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, wind
             "measurement_time": mst,
             "location_id": location_id,
             "window_open": window_open,
-            "data": [
-                {
-                    "sensor_name": "CO2 Sensor",
-                    "value": co2,
-                    "unit": "ppm"
-                },
-                {
-                    "sensor_name": "Temperature",
-                    "value": temperature,
-                    "unit": "°C"
-                },
-                {
-                    "sensor_name": "Humidity",
-                    "value": humidity,
-                    "unit": "%"
+            "c02_value": co2,
+            "c02_unit": "ppm",
+            "temperature_value": temperature,
+            "temperature_unit": "°C",
+            "humidity_value": humidity,
+            "humidity_unit": "%"
                 }
-            ]
-        }
         print(payloads)
         response = requests.post(urls[0], json=payloads)
         if response.status_code == 200:
@@ -341,32 +330,18 @@ def transmission_to_oracle_db_retry():
 
         # Upload co2 data to the Oracle database
         for entry in cth_data:
-            payloads = [
-                {
+            payloads = {
                     "measurement_time": entry[1],
                     "location_id": entry[6],
                     "window_open": entry[5],
-                    "sensor_name": "CO2 Sensor",
-                    "value": entry[2],
-                    "unit": "ppm"
-                },
-                {
-                    "measurement_time": entry[1],
-                    "location_id": entry[6],
-                    "window_open": entry[5],
-                    "sensor_name": "Temperature",
-                    "value": entry[3],
-                    "unit": "°C"
-                },
-                {
-                    "measurement_time": entry[1],
-                    "location_id": entry[6],
-                    "window_open": entry[5],
-                    "sensor_name": "Humidity",
-                    "value": entry[4],
-                    "unit": "%"
+                    "co2_value": entry[2],
+                    "co2_unit": "ppm",
+                    "temperature_value": entry[3],
+                    "temperature_unit": "°C",
+                    "humidity_value": entry[4],
+                    "humidity_unit": "%"
                 }
-            ]
+
             try:
                 response = requests.post(urls[0], json=payloads)
                 response.raise_for_status()
