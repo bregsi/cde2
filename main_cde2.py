@@ -324,17 +324,16 @@ def transmission_to_oracle_db_retry():
                 response.raise_for_status()
                 if response.status_code == 200:
                     # Print the status code of the request made to the Oracle database
-                    print(
-                        f"RETRY: CO2, Temperature and Humidity sent to Oracle database. Status code: {response.status_code}")
+                    print(f"RETRY: CO2, Temperature and Humidity sent to Oracle database. Status code: {response.status_code}")
                     #db_connection = True
-                    cursor_temp.execute(
-                        "UPDATE co2_temperature_humidity_entries SET db_deliver_status = TRUE WHERE entry_id = ?",
-                        (entry[0],))
+                    cursor_temp.execute("UPDATE co2_temperature_humidity_entries SET db_deliver_status = TRUE WHERE entry_id = ?", (entry[0],))
                     db_conn_temp.commit()
+                else:
+                    print(f"RETRY Fail: CO2, Temperature and Humidity not sent to Oracle database. Status code: {response.status_code}")
             except requests.exceptions.RequestException as e:
                 print(f"Retry: Failed to retry upload dataset to ODB {entry[0]}: {e}")
 
-        # cursor_temp.execute("UPDATE co2_entries SET db_deliver_status = TRUE WHERE entry_id = ?", (entry[0],))
+        # delete all entries which have sucessfully been sent to ODB
         cursor_temp.execute("DELETE FROM co2_temperature_humidity_entries WHERE db_deliver_status = TRUE")
         db_conn_temp.commit()
         print(f"Retry:Uploaded entry {entry[0]} to Oracle database.")
