@@ -265,7 +265,7 @@ def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, wind
         payloads = {
             "measurement_time": mst,
             "location_id": location_id,
-            "window_open": window_open,
+            "window_open": int(window_open),
             "co2_value": co2,
             "co2_unit": "ppm",
             "temperature_value": temperature,
@@ -331,7 +331,7 @@ def transmission_to_oracle_db_retry():
                 payloads = {
                     "measurement_time": entry[1],
                     "location_id": entry[6],
-                    "window_open": bool(entry[5]),
+                    "window_open": int(entry[5]),
                     "co2_value": entry[2],
                     "co2_unit": "ppm",
                     "temperature_value": entry[3],
