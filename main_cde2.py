@@ -2,9 +2,9 @@
 
 # CO2,Temperature and Humidity Sensor
 
-############
-# Libraries#
-############
+#############
+# Libraries #
+#############
 from scd30_i2c import SCD30
 import time
 import datetime
@@ -32,7 +32,7 @@ co2 = 0
 temperature = 0
 humidity = 0
 
-# introduce display options
+# introduce first set of display options
 display_options = ["co2", "temperature", "humidity"]
 display_option_index = 0
 display_option = display_options[display_option_index]
@@ -289,8 +289,17 @@ def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, wind
             db_conn_temp.commit()
             print("Dataset locally temporarily saved")
     except Exception as e:
-        print("Some Error while trying to save the Dataset: ", e)
+        print("Error while trying to send the Dataset: ", e)
         db_connection = False
+        try:
+            cursor_temp.execute(
+                "INSERT INTO co2_temperature_humidity_entries (measurement_time, co2, temperature, humidity,window_open,location_id,db_deliver_status) VALUES (?, ?, ?, ?, ?, ?,?)",
+                (mst, co2, temperature, humidity, window_open, location_id, False))
+            db_conn_temp.commit()
+        except Exception as e:
+            print("Error while trying to save the Dataset locally: ", e)
+
+
 
 
 # Define a function that retries submitting measurement data
@@ -302,13 +311,18 @@ def transmission_to_oracle_db_retry():
         db_conn_temp = sqlite3.connect('/home/pi/python/cde2_data_temp.db')
         cursor_temp = db_conn_temp.cursor()
 
-        # Fetch all unsent data from temperature_data, humidity_data, and light_data tables
-        cursor_temp.execute("SELECT * FROM co2_temperature_humidity_entries WHERE db_deliver_status = FALSE")
-        cth_data = cursor_temp.fetchall()
 
-        # Upload co2 data to the Oracle database
-        for entry in cth_data:
-            payloads = {
+
+        #check if table is empty
+        cursor_temp.execute("SELECT COUNT(*) FROM co2_temperature_humidity_entries")
+        result=cursor_temp.fetchone()
+        if result[0] == 0:
+            print('No messurements temporarily saved')
+        else:
+            print(f'The temp table has {result[0]} measurement(s) saved.')
+            # Upload co2 data to the Oracle database
+            for entry in cth_data:
+                payloads = {
                     "measurement_time": entry[1],
                     "location_id": entry[6],
                     "window_open": bool(entry[5]),
@@ -319,26 +333,31 @@ def transmission_to_oracle_db_retry():
                     "humidity_value": entry[4],
                     "humidity_unit": "%"
                 }
-            print("Retry: Payload")
-            print(payloads)
-            try:
-                response = requests.post(urls[0], json=payloads)
-                response.raise_for_status()
-                if response.status_code == 200:
-                    # Print the status code of the request made to the Oracle database
-                    print(f"RETRY: CO2, Temperature and Humidity sent to Oracle database. Status code: {response.status_code}")
-                    #db_connection = True
-                    cursor_temp.execute("UPDATE co2_temperature_humidity_entries SET db_deliver_status = TRUE WHERE measurement_time = ?", (entry[1],))
-                    db_conn_temp.commit()
-                else:
-                    print(f"RETRY Fail: CO2, Temperature and Humidity not sent to Oracle database. Status code: {response.status_code}")
-            except requests.exceptions.RequestException as e:
-                print(f"Retry: Failed to retry upload dataset to ODB {entry[0]}: {e}")
+                print("Retry: Payload")
+                print(payloads)
+                try:
+                    response = requests.post(urls[0], json=payloads)
+                    response.raise_for_status()
+                    if response.status_code == 200:
+                        # Print the status code of the request made to the Oracle database
+                        print(
+                            f"RETRY: CO2, Temperature and Humidity sent to Oracle database. Status code: {response.status_code}")
+                        # db_connection = True
+                        cursor_temp.execute(
+                            "UPDATE co2_temperature_humidity_entries SET db_deliver_status = TRUE WHERE measurement_time = ?",
+                            (entry[1],))
+                        db_conn_temp.commit()
+                    else:
+                        print(
+                            f"RETRY Fail: CO2, Temperature and Humidity not sent to Oracle database. Status code: {response.status_code}")
+                except requests.exceptions.RequestException as e:
+                    print(f"Retry: Failed to retry upload dataset to ODB {entry[0]}: {e}")
 
-        # delete all entries which have sucessfully been sent to ODB
-        cursor_temp.execute("DELETE FROM co2_temperature_humidity_entries WHERE db_deliver_status = TRUE")
-        db_conn_temp.commit()
-        print(f"Retry:Uploaded entry {entry[0]} to Oracle database.")
+            # delete all entries which have sucessfully been sent to ODB
+            cursor_temp.execute("DELETE FROM co2_temperature_humidity_entries WHERE db_deliver_status = TRUE")
+            db_conn_temp.commit()
+            print(f"Retry:Uploaded entry {entry[0]} to Oracle database.")
+
 
         # Close SQLite Connection
         db_conn_temp.close()
