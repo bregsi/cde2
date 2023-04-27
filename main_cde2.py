@@ -249,8 +249,8 @@ def save_measurement():
         #print("Mess-Zeit:")
         #print(time_taken)
         # Pause for at least x seconds
-        if time_taken < 1.9:
-            time.sleep(1.9 - time_taken)
+        if time_taken < 2.0:
+            time.sleep(2.0 - time_taken)
 
 
 # Define a function which sends the measurements to the oracle db
