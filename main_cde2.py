@@ -245,8 +245,8 @@ def save_measurement():
         # Check the time how long measurement took (transmission to oracle takes a long time)
         end_time = time.time()
         time_taken = end_time - start_time
-        print("Mess-Zeit:")
-        print(time_taken)
+        #print("Mess-Zeit:")
+        #print(time_taken)
         # Pause for at least x seconds
         if time_taken < 1.9:
             time.sleep(1.9 - time_taken)
@@ -296,8 +296,9 @@ def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, wind
                 "INSERT INTO co2_temperature_humidity_entries (measurement_time, co2, temperature, humidity,window_open,location_id,db_deliver_status) VALUES (?, ?, ?, ?, ?, ?,?)",
                 (mst, co2, temperature, humidity, window_open, location_id, False))
             db_conn_temp.commit()
+            print("CTH locally saved (to temp db).")
         except Exception as e:
-            print("Error while trying to save the Dataset locally: ", e)
+            print("Error while trying to save the Dataset locally (to temp db): ", e)
 
 
 
@@ -317,9 +318,14 @@ def transmission_to_oracle_db_retry():
         cursor_temp.execute("SELECT COUNT(*) FROM co2_temperature_humidity_entries")
         result=cursor_temp.fetchone()
         if result[0] == 0:
-            print('No messurements temporarily saved')
+            print('No measurements temporarily saved')
         else:
             print(f'The temp table has {result[0]} measurement(s) saved.')
+
+            # Fetch all unsent data from temperature_data, humidity_data, and light_data tables
+            cursor_temp.execute("SELECT * FROM co2_temperature_humidity_entries WHERE db_deliver_status = FALSE")
+            cth_data = cursor_temp.fetchall()
+
             # Upload co2 data to the Oracle database
             for entry in cth_data:
                 payloads = {
