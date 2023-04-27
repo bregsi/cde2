@@ -1,5 +1,5 @@
 # Python Code for Raspberry Pie Zero W with Grove-Hat
-#25.4.2023 18:06 MESZ
+
 # CO2,Temperature and Humidity Sensor
 
 ############
@@ -51,6 +51,7 @@ cursor = db_conn.cursor()
 # Create the temperature_humidity_entries table if it doesn't exist
 cursor.execute('''CREATE TABLE IF NOT EXISTS co2_temperature_humidity_entries
                   (timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                   measurement_time STRING,
                    co2 REAL,
                    temperature REAL,
                    humidity REAL,
@@ -216,6 +217,7 @@ def save_measurement():
         if scd30.get_data_ready():
             m = scd30.read_measurement()
             measurement_time = datetime.datetime.now()
+            mst = measurement_time.strftime("%Y-%m-%d %H:%M:%S")
             if m is not None:
                 co2 = round(m[0], 2)
                 temperature = round(m[1], 2)
@@ -225,8 +227,8 @@ def save_measurement():
                 # Insert measurement data into database
                 try:
                     cursor.execute(
-                        "INSERT INTO co2_temperature_humidity_entries (co2,temperature, humidity,window_open,location_id,db_deliver_status) VALUES (?, ?, ?, ?, ?, ?)",
-                        (co2, temperature, humidity, window_open, location_id, False))
+                        "INSERT INTO co2_temperature_humidity_entries (measurement_time, co2,temperature, humidity,window_open,location_id,db_deliver_status) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        (mst, co2, temperature, humidity, window_open, location_id, False))
                     db_conn.commit()
                     print("Saved all Measurements to local database")
                 except Exception as e:
