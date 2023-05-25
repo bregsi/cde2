@@ -64,7 +64,7 @@ db_conn.close()
 # Create a connection to the Temporary SQLite database and a temporary cursor to execute SQL commands
 db_conn_temp = sqlite3.connect('/home/pi/python/cde2_data_temp.db')
 cursor_temp = db_conn_temp.cursor()
-
+# Create the temporary temperature_humidity_entries table if it doesn't exist
 cursor_temp.execute('''CREATE TABLE IF NOT EXISTS co2_temperature_humidity_entries
                   (timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
                    measurement_time STRING,
