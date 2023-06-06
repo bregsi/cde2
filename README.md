@@ -2,7 +2,7 @@
 Smart Classroom Challange FS23
 
 ## Hardware Setup:
-Raspberry Pi Zero W with Grove Base Hat for Raspberry Pi
+Raspberry Pi Zero W with Grove Base Hat for Raspberry Pi  
 +  
 Grove SCD30 CO2 Combi Sensor  
 +  
