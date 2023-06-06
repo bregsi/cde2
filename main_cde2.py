@@ -83,6 +83,7 @@ db_conn_temp.close()
 # Function Definitions #
 ########################
 
+# 4-Digit Display Module
 # Define a function to show the display based on the display option selected
 def show_display():
     global display_option, co2, temperature, humidity, button_use
@@ -124,7 +125,7 @@ def show_display():
         # Add a sleep between updates
         time.sleep(0.25)
 
-
+# Button Module
 # Define a function to handle button presses
 def handle_button_press():
     global display_option_index, display_option, display_options, button_use, window_open, location_edit_mode
@@ -205,7 +206,7 @@ def handle_button_press():
         except IOError:
             print("Error: Button")
 
-
+# SCD30 Sensor Module
 # Define a function to save the measurement
 def save_measurement():
     global co2, temperature, humidity, db_conn, cursor, location_id
@@ -252,7 +253,7 @@ def save_measurement():
         if time_taken < 2.0:
             time.sleep(2.0 - time_taken)
 
-
+# DB Transfer Module
 # Define a function which sends the measurements to the oracle db
 def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, window_open, location_id):
     global urls, db_connection
@@ -303,7 +304,7 @@ def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, wind
 
 
 
-
+# DB Transfer Retry Module
 # Define a function that retries submitting measurement data
 def transmission_to_oracle_db_retry():
     global urls
@@ -376,7 +377,7 @@ def transmission_to_oracle_db_retry():
         if time_passed < 120:
             time.sleep(120 - time_passed)
 
-
+# LED Module
 # Define a function that handles LED signaling
 def status_led():
     #setuo global variables
