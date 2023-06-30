@@ -326,10 +326,7 @@ def transmission_to_oracle_db_retry():
         #check if table is empty
         cursor_temp.execute("SELECT COUNT(*) FROM co2_temperature_humidity_entries")
         result=cursor_temp.fetchone()
-        if result[0] == 0:
-            result[0] = 0
-            #print('No measurements temporarily saved')
-        else:
+        if result[0] != 0:
             #print(f'The temp table has {result[0]} measurement(s) saved.')
 
             # Fetch all unsent data from temperature_data, humidity_data, and light_data tables
