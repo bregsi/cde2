@@ -363,8 +363,7 @@ def transmission_to_oracle_db_retry():
                             (entry[1],))
                         db_conn_temp.commit()
                     else:
-                        #print(
-                            f"RETRY Fail: CO2, Temperature and Humidity not sent to Oracle database. Status code: {response.status_code}")
+                        #print(f"RETRY Fail: CO2, Temperature and Humidity not sent to Oracle database. Status code: {response.status_code}")
                         logging.error(str(response.satus_code))
                 except requests.exceptions.RequestException as e:
                     #print(f"Retry: Failed to retry upload dataset to ODB {entry[0]}: {e}")
