@@ -15,6 +15,7 @@ from grove.gpio import GPIO
 from grove.grove_4_digit_display import Grove4DigitDisplay
 import chainable_rgb_direct
 import threading
+import logging
 
 #########################
 # Variable introduction #
@@ -40,6 +41,10 @@ display_option = display_options[display_option_index]
 # global variables for interaction between functions
 button_use = False
 window_open = False
+
+# Configure logging
+log_file = '/home/pi/python/error.log'
+logging.basicConfig(filename=log_file, level=logging.ERROR)
 
 ##########################
 # Create Local Databases #
@@ -154,7 +159,7 @@ def handle_button_press():
                 pressed_duration = released_time - pressed_time
                 # button_use = 1
                 if pressed_duration >= 2.0 and pressed_duration < 5.0:
-                    print("Button pressed for {:.2f} seconds, more than 2 seconds!".format(pressed_duration))
+                    #print("Button pressed for {:.2f} seconds, more than 2 seconds!".format(pressed_duration))
                     # Handle long press
                     # global window_open
                     if window_open == True:
@@ -166,23 +171,23 @@ def handle_button_press():
                     pressed_time = None
                     # button_use = 0
                 elif pressed_duration >= 5.0:
-                    print("Button pressed for {:.2f} seconds, more than 5 seconds!".format(pressed_duration))
+                    #print("Button pressed for {:.2f} seconds, more than 5 seconds!".format(pressed_duration))
                     # entered location edit mode
                     if location_edit_mode == True:
                         write_location_id(location_id)
                         display_option = display_option_temp
-                        print(display_option)
+                        #print(display_option)
                         location_edit_mode = False
                     else:
                         location_edit_mode = True
                         display_option_temp = display_option
                         display_option = "LOC" + str(location_id)
-                        print(display_option)
+                        #print(display_option)
                     pressed_time = None
 
 
                 else:
-                    print("Button pressed for {:.2f} seconds, less than 2 seconds.".format(pressed_duration))
+                    #print("Button pressed for {:.2f} seconds, less than 2 seconds.".format(pressed_duration))
                     if display_option in ["co2", "temperature", "humidity"]:
                         # Cycle through display options on short press
                         display_option_index = (display_option_index + 1) % len(display_options)
@@ -193,7 +198,7 @@ def handle_button_press():
                         cycle_location()
                         display_option = "LOC" + str(location_id)
                     else:
-                        print("Error in Short Button Press")
+                        logging.error("Error in Short Button Press")
 
                 time.sleep(delay_time)
                 pressed_time = None
@@ -204,7 +209,7 @@ def handle_button_press():
         except KeyboardInterrupt:
             break
         except IOError:
-            print("Error: Button")
+            logging.error("Error: Button")
 
 # SCD30 Sensor Module
 # Define a function to save the measurement
@@ -224,7 +229,7 @@ def save_measurement():
                 co2 = round(m[0], 2)
                 temperature = round(m[1], 2)
                 humidity = round(m[2], 2)
-                print(f"CO2: {co2:.2f}ppm, temp: {temperature:.2f}'C, rh: {humidity:.2f}%")
+                #print(f"CO2: {co2:.2f}ppm, temp: {temperature:.2f}'C, rh: {humidity:.2f}%")
 
                 # Insert measurement data into database
                 try:
@@ -232,9 +237,10 @@ def save_measurement():
                         "INSERT INTO co2_temperature_humidity_entries (measurement_time, co2,temperature, humidity,window_open,location_id,db_deliver_status) VALUES (?, ?, ?, ?, ?, ?, ?)",
                         (mst, co2, temperature, humidity, window_open, location_id, False))
                     db_conn.commit()
-                    print("Saved all Measurements to local database")
+                    #print("Saved all Measurements to local database")
                 except Exception as e:
-                    print("Error saving data to local database: ", e)
+                    logging.error(str(e))
+                    #print("Error saving data to local database: ", e)
 
                 # Start thread to transmit every 5th measurement data to oracle database
                 if counter % 5 == 0:
@@ -275,32 +281,34 @@ def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, wind
             "humidity_value": humidity,
             "humidity_unit": "%"
                 }
-        print(payloads)
+        #print(payloads)
         response = requests.post(urls[0], json=payloads)
         if response.status_code == 200:
             # Print the status code of the request made to the Oracle database
-            print(f"CO2, Temperature and Humidity sent to Oracle database. Status code: {response.status_code}")
+            #print(f"CO2, Temperature and Humidity sent to Oracle database. Status code: {response.status_code}")
             db_connection = True
         else:
             # Print the status code of the request made to the Oracle database
-            print(f"CTH to Oracle database Error. Status code: {response.status_code}")
+            #print(f"CTH to Oracle database Error. Status code: {response.status_code}")
             db_connection = False
             cursor_temp.execute(
                 "INSERT INTO co2_temperature_humidity_entries (measurement_time, co2, temperature, humidity,window_open,location_id,db_deliver_status) VALUES (?, ?, ?, ?, ?, ?,?)",
                 (mst, co2, temperature, humidity, window_open, location_id, False))
             db_conn_temp.commit()
-            print("Dataset locally temporarily saved")
+            #print("Dataset locally temporarily saved")
     except Exception as e:
-        print("Error while trying to send the Dataset: ", e)
+        #print("Error while trying to send the Dataset: ", e)
+        logging.error(str(e))
         db_connection = False
         try:
             cursor_temp.execute(
                 "INSERT INTO co2_temperature_humidity_entries (measurement_time, co2, temperature, humidity,window_open,location_id,db_deliver_status) VALUES (?, ?, ?, ?, ?, ?,?)",
                 (mst, co2, temperature, humidity, window_open, location_id, False))
             db_conn_temp.commit()
-            print("CTH locally saved (to temp db).")
+            #print("CTH locally saved (to temp db).")
         except Exception as e:
-            print("Error while trying to save the Dataset locally (to temp db): ", e)
+            #print("Error while trying to save the Dataset locally (to temp db): ", e)
+            logging.error(str(e))
 
 
 
@@ -320,9 +328,9 @@ def transmission_to_oracle_db_retry():
         cursor_temp.execute("SELECT COUNT(*) FROM co2_temperature_humidity_entries")
         result=cursor_temp.fetchone()
         if result[0] == 0:
-            print('No measurements temporarily saved')
+            #print('No measurements temporarily saved')
         else:
-            print(f'The temp table has {result[0]} measurement(s) saved.')
+            #print(f'The temp table has {result[0]} measurement(s) saved.')
 
             # Fetch all unsent data from temperature_data, humidity_data, and light_data tables
             cursor_temp.execute("SELECT * FROM co2_temperature_humidity_entries WHERE db_deliver_status = FALSE")
@@ -341,14 +349,14 @@ def transmission_to_oracle_db_retry():
                     "humidity_value": entry[4],
                     "humidity_unit": "%"
                 }
-                print("Retry: Payload")
-                print(payloads)
+                #print("Retry: Payload")
+                #print(payloads)
                 try:
                     response = requests.post(urls[0], json=payloads)
                     response.raise_for_status()
                     if response.status_code == 200:
                         # Print the status code of the request made to the Oracle database
-                        print(
+                        #print(
                             f"RETRY: CO2, Temperature and Humidity sent to Oracle database. Status code: {response.status_code}")
                         # db_connection = True
                         cursor_temp.execute(
@@ -356,15 +364,17 @@ def transmission_to_oracle_db_retry():
                             (entry[1],))
                         db_conn_temp.commit()
                     else:
-                        print(
+                        #print(
                             f"RETRY Fail: CO2, Temperature and Humidity not sent to Oracle database. Status code: {response.status_code}")
+                        logging.error(str(response.satus_code))
                 except requests.exceptions.RequestException as e:
-                    print(f"Retry: Failed to retry upload dataset to ODB {entry[0]}: {e}")
+                    #print(f"Retry: Failed to retry upload dataset to ODB {entry[0]}: {e}")
+                    logging.error(str(e))
 
             # delete all entries which have sucessfully been sent to ODB
             cursor_temp.execute("DELETE FROM co2_temperature_humidity_entries WHERE db_deliver_status = TRUE")
             db_conn_temp.commit()
-            print(f"Retry:Uploaded entry {entry[0]} to Oracle database.")
+            #print(f"Retry:Uploaded entry {entry[0]} to Oracle database.")
 
 
         # Close SQLite Connection
@@ -372,8 +382,8 @@ def transmission_to_oracle_db_retry():
 
         stop_time = time.time()
         time_passed = stop_time - start_time
-        print("DB Retry Code: elapsed time since start")
-        print(time_passed)
+        #print("DB Retry Code: elapsed time since start")
+        #print(time_passed)
         if time_passed < 120:
             time.sleep(120 - time_passed)
 
@@ -411,7 +421,8 @@ def status_led():
         except KeyboardInterrupt:
             break
         except IOError:
-            print("Error: RGB LED")
+            e="Error: RGB LED"
+            logging.error(str(e))
 
 
 # Define a function that writes the location to a file
@@ -441,7 +452,7 @@ def read_urls_from_csv():
 def cycle_location():
     global location_id, location_ids
     location_id = (location_id + 1) % len(location_ids)
-    print(f"Location ID: {location_ids[location_id]}")
+    #print(f"Location ID: {location_ids[location_id]}")
 
 
 ###########################################
@@ -477,7 +488,7 @@ button = GPIO(button_pin, GPIO.IN)
 try:
     location_id = read_location_id()
 except IOError:
-    print("Location ID not yet set")
+    #print("Location ID not yet set")
     write_location_id(0)
 
 # Read the connection info to the oracle DB from file
