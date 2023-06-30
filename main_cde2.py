@@ -229,8 +229,7 @@ def save_measurement():
                 co2 = round(m[0], 2)
                 temperature = round(m[1], 2)
                 humidity = round(m[2], 2)
-                #print(f"CO2: {co2:.2f}ppm, temp: {temperature:.2f}'C, rh: {humidity:.2f}%")
-
+                #print(f"CO2: {co2:.2f}ppm, temp: {temperature:.2f}'C, rh: {humidity:.2f}%")                
                 # Insert measurement data into database
                 try:
                     cursor.execute(
@@ -328,6 +327,7 @@ def transmission_to_oracle_db_retry():
         cursor_temp.execute("SELECT COUNT(*) FROM co2_temperature_humidity_entries")
         result=cursor_temp.fetchone()
         if result[0] == 0:
+            result[0] = 0
             #print('No measurements temporarily saved')
         else:
             #print(f'The temp table has {result[0]} measurement(s) saved.')
