@@ -356,8 +356,7 @@ def transmission_to_oracle_db_retry():
                     response.raise_for_status()
                     if response.status_code == 200:
                         # Print the status code of the request made to the Oracle database
-                        #print(
-                            f"RETRY: CO2, Temperature and Humidity sent to Oracle database. Status code: {response.status_code}")
+                        #print(f"RETRY: CO2, Temperature and Humidity sent to Oracle database. Status code: {response.status_code}")
                         # db_connection = True
                         cursor_temp.execute(
                             "UPDATE co2_temperature_humidity_entries SET db_deliver_status = TRUE WHERE measurement_time = ?",
