@@ -92,6 +92,8 @@ db_conn_temp.close()
 # Define a function to show the display based on the display option selected
 def show_display():
     global display_option, co2, temperature, humidity, button_use
+    log_file = '/home/pi/python/error.log'
+    logging.basicConfig(filename=log_file, level=logging.ERROR)
     while True:
         # Blink the display for CO2, Temperature, and Humidity options
         if display_option in ["co2", "temperature", "humidity"]:
@@ -134,6 +136,8 @@ def show_display():
 # Define a function to handle button presses
 def handle_button_press():
     global display_option_index, display_option, display_options, button_use, window_open, location_edit_mode
+    log_file = '/home/pi/python/error.log'
+    logging.basicConfig(filename=log_file, level=logging.ERROR)
     pressed_time = None
     delay_time = 0.25  # set the delay time to 0.25 second
 
@@ -215,6 +219,8 @@ def handle_button_press():
 # Define a function to save the measurement
 def save_measurement():
     global co2, temperature, humidity, db_conn, cursor, location_id
+    log_file = '/home/pi/python/error.log'
+    logging.basicConfig(filename=log_file, level=logging.ERROR)
     # Establish a connection to the SQLite database and a cursor to execute SQL commands
     db_conn = sqlite3.connect('/home/pi/python/cde2_data.db')
     cursor = db_conn.cursor()
@@ -262,6 +268,8 @@ def save_measurement():
 # Define a function which sends the measurements to the oracle db
 def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, window_open, location_id):
     global urls, db_connection
+    log_file = '/home/pi/python/error.log'
+    logging.basicConfig(filename=log_file, level=logging.ERROR)
     mst = measurement_time.strftime("%Y-%m-%d %H:%M:%S")
 
     # Establish a connection to the Temporary SQLite database and a temporary cursor to execute SQL commands
@@ -314,6 +322,8 @@ def transmission_to_oracle_db(measurement_time, co2, temperature, humidity, wind
 # DB Transfer Retry Module
 # Define a function that retries submitting measurement data
 def transmission_to_oracle_db_retry():
+    log_file = '/home/pi/python/error.log'
+    logging.basicConfig(filename=log_file, level=logging.ERROR)
     global urls
     while True:
         start_time = time.time()
@@ -387,6 +397,8 @@ def transmission_to_oracle_db_retry():
 def status_led():
     #setuo global variables
     global db_connection, co2, window_open
+    log_file = '/home/pi/python/error.log'
+    logging.basicConfig(filename=log_file, level=logging.ERROR)
     #Start Loop for the RGB LED
     while True:
         try:
