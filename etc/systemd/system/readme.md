@@ -2,7 +2,7 @@
 starting your python scripts as system services will log prints and outputs of scripts in system log files, which can quickly fill your harddrive/sd-card, use with caution.
 
 # Setup
-create a "your-python-script.service"
+create a "your-python-script.service" in /etc/sytemd/system/
 >>
 [Unit]
 Description=My Python Script
