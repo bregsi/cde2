@@ -7,15 +7,18 @@ create a "your-python-script.service" in /etc/sytemd/system/
 "
 
 [Unit]
+
 Description=My Python Script
 After=network.target
 
 [Service]
+
 ExecStart=/usr/bin/python3 /path/to/my-script.py
 Restart=always
 User=pi
 
 [Install]
+
 WantedBy=multi-user.target
 
 "
@@ -36,13 +39,16 @@ sudo nano /etc/systemd/system/my-python-script.timer
 "
 
 [Unit]
+
 Description=Timer to stop and restart my Python script
 
 [Timer]
+
 OnBootSec=10min
 OnUnitActiveSec=10min
 
 [Install]
+
 WantedBy=timers.target
 
 "
