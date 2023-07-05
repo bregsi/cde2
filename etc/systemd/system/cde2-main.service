@@ -1,0 +1,11 @@
+[Unit]
+Description=CDE2 Python Script
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python /home/pi/python/main_cde2.py
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target

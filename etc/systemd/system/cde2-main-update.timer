@@ -1,0 +1,11 @@
+[Unit]
+Description=Timer to stop and restart my Python script
+After=network-online.target
+Wants=network-online.target
+[Timer]
+OnBootSec=0.5min
+#OnUnitActiveSec=60min
+Unit=cde2-main-update.service
+[Install]
+WantedBy=timers.target
+

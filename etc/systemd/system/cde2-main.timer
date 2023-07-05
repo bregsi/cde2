@@ -1,0 +1,9 @@
+[Unit]
+Description=Timer to stop and restart my Python script
+#After=cde2-main-backup.service
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=10min
+Unit=cde2-main.service
+[Install]
+WantedBy=timers.target

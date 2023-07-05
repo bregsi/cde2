@@ -1,0 +1,10 @@
+[Unit]
+Description=My Python Script
+After=network.target
+
+[Service]
+ExecStart=/home/pi/python/cde2/pull_updates.sh
+User=pi
+
+[Install]
+WantedBy=multi-user.target
