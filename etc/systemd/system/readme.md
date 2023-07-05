@@ -3,7 +3,9 @@ starting your python scripts as system services will log prints and outputs of s
 
 # Setup
 create a "your-python-script.service" in /etc/sytemd/system/
->>
+
+"
+
 [Unit]
 Description=My Python Script
 After=network.target
@@ -15,7 +17,9 @@ User=pi
 
 [Install]
 WantedBy=multi-user.target
-<<
+
+"
+
 # reload services 
 sudo systemctl daemon-reload
 
@@ -28,7 +32,9 @@ sudo systemctl stop my-python-script
 
 create timer file:
 sudo nano /etc/systemd/system/my-python-script.timer
->>
+
+"
+
 [Unit]
 Description=Timer to stop and restart my Python script
 
@@ -38,7 +44,8 @@ OnUnitActiveSec=10min
 
 [Install]
 WantedBy=timers.target
-<<
+
+"
 
 
 This timer will trigger the my-python-script.service unit every 10 minutes.
